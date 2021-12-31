@@ -1,11 +1,11 @@
 ---
 - name: as-set {{ as_set_config.as_set }}/ gather ipv4 prefixes
-  command: bgpq4 -4 -A -F "%n/%l\n" -m 24 -h {{ frr_irrd_server }} {{ as_set_config.as_set }}
+  command: bgpq4 -4 -A -m 24 -F "%n/%l ge %a le %A\n" -h {{ frr_irrd_server }} {{ as_set_config.as_set }}
   register: irrv4
   changed_when: false
 
 - name: as-set {{ as_set_config.as_set }}/ gather ipv6 prefixes
-  command: bgpq4 -6 -A -F "%n/%l\n" -m 48 -h {{ frr_irrd_server }} {{ as_set_config.as_set }}
+  command: bgpq4 -6 -A -m 48 -F "%n/%l ge %a le %A\n" -h {{ frr_irrd_server }} {{ as_set_config.as_set }}
   register: irrv6
   changed_when: false
 
