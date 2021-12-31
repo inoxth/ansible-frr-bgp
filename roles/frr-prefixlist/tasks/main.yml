@@ -1,0 +1,10 @@
+---
+# tasks file for frr-prefixlist
+
+- name: configure frr prefix-list
+  include_tasks: frr_prefixlist_entries.yml
+  loop: "{{ frr_prefixlists }}"
+  loop_control:
+    loop_var: prefixlist
+  when: frr_prefixlists is defined
+  tags: [ frr, frr-config, frr-bgp, frr-prefixlist ]
