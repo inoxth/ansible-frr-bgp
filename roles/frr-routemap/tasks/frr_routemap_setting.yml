@@ -1,0 +1,21 @@
+---
+- name: route-map entry include
+  include_tasks: frr_routemap_entry.yml
+  loop: "{{ routemap.entries }}"
+  loop_control:
+    loop_var: rm_entry
+  tags: [ frr-routemap ]
+
+- name: gather route-map sequence list for {{ routemap.name }}
+  shell:
+    vtysh -c "show run" | grep -E "route-map {{ routemap.name }} (permit|deny) [0-9]+$"  | awk '{ print $4 }'
+  register: active_routemap_sequence
+  changed_when: false
+  tags: [ frr-routemap, frr-routemap-delete, not_print_action ]
+
+- name: loop through active route-map sequence '{{ routemap.name }}'
+  include_tasks: frr_routemap_cleanup.yml
+  loop: "{{ active_routemap_sequence.stdout_lines }}"
+  loop_control:
+    loop_var: rm_active_id
+  tags: [ frr-routemap, frr-routemap-delete ]

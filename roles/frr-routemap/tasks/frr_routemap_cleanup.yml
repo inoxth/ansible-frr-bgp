@@ -1,0 +1,34 @@
+---
+- name: set pending delete for {{ routemap.name }} sequence {{ rm_active_id }}
+  set_fact:
+    rm_sequence_delete: true
+    routemap_delete_config: ""
+  tags: [ frr-routemap, frr-routemap-delete, not_print_action ]
+
+- name: set no delete if entry found
+  set_fact:
+    rm_sequence_delete: false
+  loop: "{{ routemap.entries }}"
+  loop_control:
+    loop_var: rm_entry
+  when: rm_entry.sequence|int == rm_active_id|int
+  tags: [ frr-routemap, frr-routemap-delete, not_print_action ]
+
+- name: route-map {{ routemap.name }} {{ rm_active_id }}/check for route-map deletion
+  shell:
+    vtysh -c "show run" | grep -E "route-map {{ routemap.name }} (permit|deny) {{ rm_active_id }}$"
+  when: rm_sequence_delete|bool
+  register: routemap_delete_config
+  ignore_errors: true
+  changed_when: false
+  tags: [ frr-routemap, frr-routemap-delete, not_print_action ]
+
+- name: actually delete {{ routemap.name }} {{ rm_active_id }}
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      no {{ routemap_delete_config.stdout_lines[0] }}
+      "
+  when: rm_sequence_delete|bool and routemap_delete_config.stdout_lines[0] is defined and routemap_delete_config.stdout_lines[0] is regex("^route-map ")
+  tags: [ frr-routemap, frr-routemap-delete ]
+  notify: save frr config

@@ -1,0 +1,9 @@
+---
+# tasks file for frr-routemap
+
+- name: configure frr route-map
+  include_tasks: frr_routemap_setting.yml
+  loop: "{{ frr_routemaps }}"
+  loop_control:
+    loop_var: routemap
+  tags: [ frr, frr-config, frr-bgp, frr-routemap ]
