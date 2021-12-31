@@ -1,0 +1,8 @@
+---
+# tasks file for frr-prefixlist-from-as-set
+- name: generate prefix-lists
+  include: frr-as-sets.yml
+  loop: "{{ frr_as_sets }}"
+  loop_control:
+    loop_var: as_set_config
+  tags: [ frr-as-sets ]
