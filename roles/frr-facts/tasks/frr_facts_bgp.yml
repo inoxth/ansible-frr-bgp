@@ -1,0 +1,19 @@
+
+- name: gather frr bgp ipv4 peers
+  command: vtysh -c "show ip bgp summ json"
+  register: frr_bgp_ipv4_cmd
+  changed_when: False
+  tags: [ not_print_action ]
+
+- name: gather frr bgp ipv6 peers
+  command: vtysh -c "show bgp ipv6 summ json"
+  register: frr_bgp_ipv6_cmd
+  changed_when: False
+  tags: [ not_print_action ]
+
+- name: set bgp peers facts
+  set_fact:
+    frr_bgp_ipv4: "{{ (frr_bgp_ipv4_cmd.stdout|from_json).ipv4Unicast.peers|default({}) }}"
+    frr_bgp_ipv6: "{{ (frr_bgp_ipv6_cmd.stdout|from_json).ipv6Unicast.peers|default({}) }}"
+    frr_asnum: "{{ (frr_bgp_ipv4_cmd.stdout|from_json).ipv4Unicast.as|default(59238) }}"
+  tags: [ not_print_action ]

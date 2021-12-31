@@ -1,0 +1,9 @@
+---
+- name: gather frr config
+  command: vtysh -c "show run"
+  register: frr_config
+  changed_when: False
+
+- name: gather bgp facts
+  include: frr_facts_bgp.yml
+  when: '"\nrouter bgp " in frr_config.stdout'
