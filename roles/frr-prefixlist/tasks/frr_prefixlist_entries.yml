@@ -14,13 +14,7 @@
   loop: "{{ prefixlist.entries }}"
   loop_control:
     loop_var: prefix
-  when: (
-    prefixlist.address_family == "ipv6" and
-    frr_config.stdout is not regex("ipv6 prefix-list " ~ prefixlist.name ~" seq [0-9]+ permit " ~ prefix)
-    ) or (
-    prefixlist.address_family != "ipv6" and
-    frr_config.stdout is not regex("ip prefix-list " ~ prefixlist.name ~" seq [0-9]+ permit " ~ prefix)
-    )
+  when: prefix not in prefixlist_config.stdout_lines
   notify: save frr config
 
 - name: prefix-list {{ prefixlist.name }}/ remove unused entries
