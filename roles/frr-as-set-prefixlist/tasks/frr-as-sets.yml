@@ -10,8 +10,10 @@
   changed_when: false
 
 - name: run frr-prefixlist role
-  import_role:
+  include_role:
     name: frr-prefixlist
+    apply:
+      tags: frr-as-sets
   vars: 
     frr_prefixlists:
     - name: "{{ as_set_config.name }}"
