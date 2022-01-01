@@ -1,0 +1,25 @@
+---
+- name: check for current large community entries
+  shell:
+    vtysh -c "show run" | grep -E "^bgp large-community-list standard {{ community.name }} " | grep -oE 'permit .*' | sed 's/permit //g'
+  register: community_config
+  changed_when: false
+  tags: [ not_print_action ]
+
+- name: add entries for community {{ community.name }}
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      bgp large-community-list standard {{ community.name }} permit {{ item }}"
+  loop: "{{ community.entries }}"
+  when: item not in community_config.stdout_lines
+  notify: save frr config
+
+- name: remove unused entries for community {{ community.name }}
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      no bgp large-community-list standard {{ community.name }} permit {{ item }}"
+  loop: "{{ community_config.stdout_lines }}"
+  when: item not in community.entries
+  notify: save frr config

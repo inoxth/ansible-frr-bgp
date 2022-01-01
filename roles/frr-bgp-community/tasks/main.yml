@@ -1,0 +1,25 @@
+---
+# tasks file for frr-prefixlist
+- name: loop through 'frr_bgp_communities'
+  include_tasks: frr_bgp_communities_entries.yml
+  loop: "{{ frr_bgp_communities }}"
+  loop_control:
+    loop_var: community
+  when: frr_bgp_communities is defined
+  tags: [ frr, frr-config, frr-community, frr-bgp-community, frr-bgp-community-list ]
+
+- name: loop through 'frr_bgp_extcommunities'
+  include_tasks: frr_bgp_extcommunities_entries.yml
+  loop: "{{ frr_bgp_extcommunities }}"
+  loop_control:
+    loop_var: community
+  when: frr_bgp_extcommunities is defined
+  tags: [ frr, frr-config, frr-ext-community, frr-bgp-ext-community, frr-bgp-ext-community-list ]
+
+- name: loop through 'frr_bgp_largecommunities'
+  include_tasks: frr_bgp_largecommunities_entries.yml
+  loop: "{{ frr_bgp_largecommunities }}"
+  loop_control:
+    loop_var: community
+  when: frr_bgp_largecommunities is defined
+  tags: [ frr, frr-config, frr-large-community, frr-bgp-large-community, frr-bgp-large-community-list ]
