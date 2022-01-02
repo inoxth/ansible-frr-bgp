@@ -1,21 +1,25 @@
 ---
-- name: route-map entry include
-  include_tasks: frr_routemap_entry.yml
-  loop: "{{ routemap.entries }}"
-  loop_control:
-    loop_var: rm_entry
+- name: route-map {{ routemap.name }}/ check current route-map setting
+  shell:
+    vtysh -c "show run" | sed -n '/^route-map {{ routemap.name }} /,/^!$/p'
+  register: routemap_config_all
+  changed_when: false
+  tags: [ frr-routemap, not_print_action ]
+
+- name: route-map {{ routemap.name }}/generate route-map entries
+  template:
+    src: "route-map-entries.j2"
+    dest: "/tmp/route-map-entries-{{ routemap.name }}"
+    mode: 0600
+  changed_when: false
   tags: [ frr-routemap ]
 
-- name: gather route-map sequence list for {{ routemap.name }}
+- name: route-map {{ routemap.name }}/ execute route-map set command
   shell:
-    vtysh -c "show run" | grep -E "route-map {{ routemap.name }} (permit|deny) [0-9]+$"  | awk '{ print $4 }'
-  register: active_routemap_sequence
-  changed_when: false
-  tags: [ frr-routemap, frr-routemap-delete, not_print_action ]
-
-- name: loop through active route-map sequence '{{ routemap.name }}'
-  include_tasks: frr_routemap_cleanup.yml
-  loop: "{{ active_routemap_sequence.stdout_lines }}"
-  loop_control:
-    loop_var: rm_active_id
-  tags: [ frr-routemap, frr-routemap-delete ]
+    cmd: |
+      grep -E "^ " /tmp/route-map-entries-{{ routemap.name }} > /dev/null && (vtysh -f /tmp/route-map-entries-{{ routemap.name }} || exit 2)
+  register: routemap_execution
+  changed_when: routemap_execution.rc == 0
+  failed_when: routemap_execution.rc > 1
+  notify: save frr config
+  tags: [ frr-routemap ]

@@ -1,6 +1,6 @@
-conf t
+{% for rm_entry in routemap.entries %}
 route-map {{ routemap.name }} {{ rm_entry.action }} {{ rm_entry.sequence }}
-{% for item in routemap_config.stdout_lines %}
+{% for item in routemap_config_all.stdout_lines|routemap_list(rm_entry.sequence) %}
 {% if item is regex("^ on-match ") and rm_entry.on_match is not defined %}
   no {{ item }}
 {% endif %}
@@ -11,23 +11,28 @@ route-map {{ routemap.name }} {{ rm_entry.action }} {{ rm_entry.sequence }}
   no {{ item | regex_replace('^\\s*(set (table|as-path prepend) [0-9 ]*)', 'set \\2') }}
 {% endif %}
 {% endfor %}
-{% if rm_entry.call is defined and " call " ~ rm_entry.call[0] not in routemap_config.stdout_lines %}
+{% if rm_entry.call is defined and " call " ~ rm_entry.call[0] not in routemap_config_all.stdout_lines|routemap_list(rm_entry.sequence) %}
   call {{ rm_entry.call[0] if rm_entry.call[0] is defined else rm_entry.call }}
 {% endif %}
-{% if rm_entry.on_match is defined and " on-match " ~ rm_entry.on_match[0] not in routemap_config.stdout_lines %}
+{% if rm_entry.on_match is defined and " on-match " ~ rm_entry.on_match[0] not in routemap_config_all.stdout_lines|routemap_list(rm_entry.sequence) %}
   on-match {{ rm_entry.on_match[0] if rm_entry.on_match[0] is defined else rm_entry.on_match }}
 {% endif %}
 {% if rm_entry.matches is defined %}
 {% for item in rm_entry.matches %}
-{% if " match " ~ item not in routemap_config.stdout_lines %}
+{% if " match " ~ item not in routemap_config_all.stdout_lines|routemap_list(rm_entry.sequence) %}
   match {{ item }}
 {% endif %}
 {% endfor %}
 {% endif %}
 {% if rm_entry.set is defined %}
 {% for item in rm_entry.set %}
-{% if " set " ~ item not in routemap_config.stdout_lines %}
+{% if " set " ~ item not in routemap_config_all.stdout_lines|routemap_list(rm_entry.sequence) %}
   set {{ item }}
 {% endif %}
 {% endfor %}
 {% endif %}
+{% endfor %}
+
+{% for item in routemap_config_all.stdout_lines|routemap_cleanup(routemap.entries) %}
+ no {{ item }}
+{% endfor %}
