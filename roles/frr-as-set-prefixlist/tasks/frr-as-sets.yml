@@ -2,11 +2,13 @@
 - name: as-set {{ as_set_config.as_set }}/ gather ipv4 prefixes
   command: bgpq4 -4 -A -m 24 -F "%n/%l ge %a le %A\n" -h {{ frr_irrd_server }} {{ as_set_config.as_set }}
   register: irrv4
+  delegate_to: localhost
   changed_when: false
 
 - name: as-set {{ as_set_config.as_set }}/ gather ipv6 prefixes
   command: bgpq4 -6 -A -m 48 -F "%n/%l ge %a le %A\n" -h {{ frr_irrd_server }} {{ as_set_config.as_set }}
   register: irrv6
+  delegate_to: localhost
   changed_when: false
 
 - name: run frr-prefixlist role
