@@ -1,5 +1,5 @@
 {% for rm_entry in routemap.entries %}
-route-map {{ routemap.name }} {{ rm_entry.action }} {{ rm_entry.sequence }}
+{{ '' if routemap_config_all.stdout_lines|routemap_exists(rm_entry.action, rm_entry.sequence)|bool else ' ' }}route-map {{ routemap.name }} {{ rm_entry.action }} {{ rm_entry.sequence }}
 {% for item in routemap_config_all.stdout_lines|routemap_list(rm_entry.sequence) %}
 {% if item is regex("^ on-match ") and rm_entry.on_match is not defined %}
   no {{ item }}

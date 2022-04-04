@@ -1,5 +1,11 @@
 import re
 
+def routemap_exists(lists, action, rmindex):
+    for line in lists:
+        if re.search("^route-map [^ ]+ " + str(action) + " " + str(rmindex) + "$", line):
+            return True
+    return False
+
 def routemap_list(lists, rmindex):
     output = []
     found_start = False
@@ -29,6 +35,7 @@ def routemap_cleanup(lists, configure):
 class FilterModule(object):
     def filters(self):
         return {
+          'routemap_exists': routemap_exists,
           'routemap_list': routemap_list,
           'routemap_cleanup': routemap_cleanup
         }
