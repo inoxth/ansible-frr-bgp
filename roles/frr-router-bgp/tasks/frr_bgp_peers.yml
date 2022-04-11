@@ -1,0 +1,235 @@
+---
+- name: create peer-group
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ item.ip }} peer-group
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.ispeergroup is defined and item.ispeergroup and " neighbor " ~ item.ip ~ " peer-group" not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} peer-group"
+
+- name: create peer entry
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ item.ip }} remote-as {{ item.remote_as }}
+      address-family {{ item.address_family }} unicast
+      neighbor {{ item.ip }} activate
+      neighbor {{ item.ip }} next-hop-self
+      neighbor {{ item.ip }} soft-reconfiguration inbound
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '( item.ispeergroup is not defined and (
+      (item.address_family == "ipv4" and frr_bgp_ipv4[item.ip] is not defined) or
+      (item.address_family == "ipv6" and frr_bgp_ipv6[item.ip] is not defined)
+    )) or (
+      item.ispeergroup is defined and item.ispeergroup and 
+      " neighbor " ~ item.ip ~ " remote-as " ~ item.remote_as not in frr_config.stdout_lines
+    )'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+
+- name: set neighbor peer password
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ item.ip }} password {{ item.password }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.password is defined and 
+    " neighbor " ~ item.ip ~ " password " ~ item.password not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} password"
+
+- name: set neighbor peer description
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ item.ip }} description {{ item.desc }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.desc is defined and 
+    " neighbor " ~ item.ip ~ " description " ~ item.desc not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} description"
+
+- name: set neighbor peer shutdown status
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      {{ 'no' if item.shutdown is not defined else '' }} neighbor {{ item.ip }} shutdown
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.shutdown is defined and 
+    " neighbor " ~ item.ip ~ " shutdown" not in frr_config.stdout_lines) or
+    (item.shutdown is not defined and 
+    " neighbor " ~ item.ip ~ " shutdown" in frr_config.stdout_lines)'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.shutdown is not defined else '' }}neighbor {{ item.ip }} shutdown"
+
+- name: set neighbor peer bfd status
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      {{ 'no' if item.bfd is not defined else '' }} neighbor {{ item.ip }} bfd
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.bfd is defined and 
+    " neighbor " ~ item.ip ~ " bfd" not in frr_config.stdout_lines) or
+    (item.bfd is not defined and 
+    " neighbor " ~ item.ip ~ " bfd" in frr_config.stdout_lines)'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.bfd is not defined else '' }}neighbor {{ item.ip }} bfd"
+
+- name: set neighbor peer route-reflector-client status
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      {{ 'no' if item.route_reflector_client is not defined else '' }} neighbor {{ item.ip }} route-reflector-client
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.route_reflector_client is defined and 
+    "  neighbor " ~ item.ip ~ " route-reflector-client" not in frr_config.stdout_lines) or
+    (item.route_reflector_client is not defined and 
+    "  neighbor " ~ item.ip ~ " route-reflector-client" in frr_config.stdout_lines)'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.route_reflector_client is not defined else '' }}neighbor {{ item.ip }} route-reflector-client"
+
+- name: set neighbor peer 'ebgp-multihop'
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      {{ 'no' if item.ebgp_multihop is not defined else '' }} neighbor {{ item.ip }} ebgp-multihop{{ ' ' ~ item.ebgp_multihop if item.ebgp_multihop is defined else '' }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.ebgp_multihop is defined and 
+    " neighbor " ~ item.ip ~ " ebgp-multihop " ~ item.ebgp_multihop not in frr_config.stdout_lines) or
+    (item.ebgp_multihop is not defined and 
+    frr_config.stdout is regex(" neighbor " ~ item.ip ~ " ebgp-multihop ") )'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.ebgp_multihop is not defined else '' }}neighbor {{ item.ip }} ebgp-multihop"
+
+- name: set neighbor peer 'update-source'
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      {{ 'no' if item.update_source is not defined else '' }} neighbor {{ item.ip }} update-source{{ ' ' ~ item.update_source if item.update_source is defined else '' }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.update_source is defined and 
+    " neighbor " ~ item.ip ~ " update-source " ~ item.update_source not in frr_config.stdout_lines) or
+    (item.update_source is not defined and 
+    frr_config.stdout is regex(" neighbor " ~ item.ip ~ " update-source ") )'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.update_source is not defined else '' }}neighbor {{ item.ip }} update-source"
+
+- name: set neighbor peer 'default-originate'
+  include_tasks: frr_bgp_peers_default_originate.yml
+  with_items: "{{ frr_bgp.peers }}"
+  loop_control:
+    label: "{{ 'no ' if item.default_originate is not defined else '' }}neighbor {{ item.ip }} default-originate"
+
+- name: set neighbor peer remove-private-AS
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      {{ 'no' if item.remove_private_as is not defined else '' }} neighbor {{ item.ip }} remove-private-AS
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.remove_private_as is defined and 
+    "  neighbor " ~ item.ip ~ " remove-private-AS" not in frr_config.stdout_lines) or
+    (item.remove_private_as is not defined and 
+    "  neighbor " ~ item.ip ~ " remove-private-AS" in frr_config.stdout_lines)'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.remove_private_as is not defined else '' }}neighbor {{ item.ip }} remove-private-AS"
+
+- name: set peer maximum prefix
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      neighbor {{ item.ip }} maximum-prefix {{ item.maximum_prefix }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.maximum_prefix is defined and 
+    "  neighbor " ~ item.ip ~ " maximum-prefix " ~ item.maximum_prefix not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} maximum-prefix {{ item.maximum_prefix|default('NOTSET') }}"
+
+- name: set peer weight
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      neighbor {{ item.ip }} weight {{ item.weight }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.weight is defined and 
+    "  neighbor " ~ item.ip ~ " weight " ~ item.weight not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} weight {{ item.weight|default('NOTSET') }}"
+
+- name: set peer route-map in
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      neighbor {{ item.ip }} route-map {{ item.route_map_in }} in
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.route_map_in is defined and 
+    "  neighbor " ~ item.ip ~ " route-map " ~ item.route_map_in ~ " in" not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} route-map {{ item.route_map_in|default('NOTSET') }} in"
+
+- name: set peer route-map out
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      neighbor {{ item.ip }} route-map {{ item.route_map_out }} out
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.route_map_out is defined and 
+    "  neighbor " ~ item.ip ~ " route-map " ~ item.route_map_out ~ " out" not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} route-map {{ item.route_map_out|default('NOTSET') }} out"
+
+- name: set ipv4 peer-group members
+  include_tasks: frr_bgp_peers_peergroup_member.yml
+  with_items: "{{ frr_bgp.peers }}"
+  loop_control:
+    loop_var: peer
+  when: peer.ispeergroup is defined and peer.ispeergroup and peer.members is defined

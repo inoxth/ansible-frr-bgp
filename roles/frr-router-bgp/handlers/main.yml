@@ -1,0 +1,4 @@
+---
+# handlers file for frr-routemap
+- name: save frr config
+  command: "vtysh -c 'write mem'"

@@ -1,0 +1,20 @@
+---
+
+- name: neighbor {{ item.ip }}/ set default originate variable
+  set_fact:
+    frr_bgp_default_originate_line: "{{ 'no ' if item.default_originate is not defined else '' }}neighbor {{ item.ip }} default-originate{{ ' route-map ' ~ item.default_originate_route_map if item.default_originate is defined and item.default_originate_route_map is defined else '' }}"
+  tags: [ not_print_action ]
+
+- name: neighbor {{ item.ip }}/ set neighbor peer 'default-originate'
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      {{ frr_bgp_default_originate_line }}
+      "
+  when: '(item.default_originate is defined and 
+    "  " ~ frr_bgp_default_originate_line not in frr_config.stdout_lines) or
+    (item.default_originate is not defined and 
+    frr_config.stdout is regex(" neighbor " ~ item.ip ~ " default-originate\s") )'
+  notify: save frr config

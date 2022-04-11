@@ -1,0 +1,145 @@
+---
+- name: create router bgp
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      bgp router-id {{ frr_bgp.router_id|default(ansible_default_ipv4.address) }}
+      timers bgp 10 30
+      "
+  when: '"router bgp " ~ frr_bgp.asnum not in frr_config.stdout_lines'
+  notify: save frr config
+
+- name: set 'no bgp default ipv4-unicast'
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      no bgp default ipv4-unicast
+      "
+  when: '" no bgp default ipv4-unicast" not in frr_config.stdout_lines'
+  notify: save frr config
+
+- name: set 'bgp log-neighbor-changes'
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      bgp log-neighbor-changes
+      "
+  when: '" bgp log-neighbor-changes" not in frr_config.stdout_lines'
+  notify: save frr config
+
+- name: check for bgp af_ipv4 settings
+  shell:
+    vtysh -c "show run" | grep -EA 99999 "^router bgp " | grep -A 9999 'address-family ipv4 unicast' |sed '/exit-address-family/q'
+  register: bgp_af_ipv4
+  changed_when: false
+  tags: [ not_print_action ]
+
+- name: check for bgp af_ipv6 settings
+  shell:
+    vtysh -c "show run" | grep -EA 99999 "^router bgp " | grep -A 9999 'address-family ipv6 unicast' |sed '/exit-address-family/q'
+  register: bgp_af_ipv6
+  changed_when: false
+  tags: [ not_print_action ]
+
+- name: set redistribute parameter for ipv4
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv4 unicast
+      redistribute {{ item }}
+      "
+  with_items: "{{ frr_bgp.ipv4.redistribute }}"
+  when: frr_bgp.ipv4 is defined and frr_bgp.ipv4.redistribute is defined and "  redistribute " ~ item not in bgp_af_ipv4.stdout_lines
+  notify: save frr config
+  loop_control:
+    label: "ipv4 redistribute {{ item }}"
+
+- name: set redistribute parameter for ipv6
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv6 unicast
+      redistribute {{ item }}
+      "
+  with_items: "{{ frr_bgp.ipv6.redistribute }}"
+  when: frr_bgp.ipv6 is defined and frr_bgp.ipv6.redistribute is defined and "  redistribute " ~ item not in bgp_af_ipv6.stdout_lines
+  notify: save frr config
+  loop_control:
+    label: "ipv6 redistribute {{ item }}"
+
+- name: define ipv4 network
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv4 unicast
+      network {{ item }}
+      "
+  with_items: "{{ frr_bgp.ipv4.network }}"
+  when: frr_bgp.ipv4 is defined and frr_bgp.ipv4.network is defined and "  network " ~ item not in bgp_af_ipv4.stdout_lines
+  notify: save frr config
+  loop_control:
+    label: "ipv4 network {{ item }}"
+
+- name: define ipv6 network
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv6 unicast
+      network {{ item }}
+      "
+  with_items: "{{ frr_bgp.ipv6.network }}"
+  when: frr_bgp.ipv6 is defined and frr_bgp.ipv6.network is defined and "  network " ~ item not in bgp_af_ipv6.stdout_lines
+  notify: save frr config
+  loop_control:
+    label: "ipv6 network {{ item }}"
+
+- name: set maximum-path for bgp ipv4
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv4 unicast
+      maximum-paths {{ frr_bgp.ipv4.maximum_paths|int }}
+      "
+  when: frr_bgp.ipv4 is defined and frr_bgp.ipv4.maximum_paths is defined and "  maximum-paths " ~ frr_bgp.ipv4.maximum_paths not in bgp_af_ipv4.stdout_lines
+  notify: save frr config
+
+- name: set maximum-path for bgp ipv4 ibgp
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv4 unicast
+      maximum-paths ibgp {{ frr_bgp.ipv4.maximum_paths_ibgp|int }}
+      "
+  when: frr_bgp.ipv4 is defined and frr_bgp.ipv4.maximum_paths_ibgp is defined and "  maximum-paths ibgp " ~ frr_bgp.ipv4.maximum_paths_ibgp not in bgp_af_ipv4.stdout_lines
+  notify: save frr config
+
+- name: set maximum-path for bgp ipv6
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv6 unicast
+      maximum-paths {{ frr_bgp.ipv6.maximum_paths|int }}
+      "
+  when: frr_bgp.ipv6 is defined and frr_bgp.ipv6.maximum_paths is defined and "  maximum-paths " ~ frr_bgp.ipv6.maximum_paths not in bgp_af_ipv6.stdout_lines
+  notify: save frr config
+
+- name: set maximum-path for bgp ipv6 ibgp
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family ipv6 unicast
+      maximum-paths ibgp {{ frr_bgp.ipv6.maximum_paths_ibgp|int }}
+      "
+  when: frr_bgp.ipv6 is defined and frr_bgp.ipv6.maximum_paths_ibgp is defined and "  maximum-paths ibgp " ~ frr_bgp.ipv6.maximum_paths_ibgp not in bgp_af_ipv6.stdout_lines
+  notify: save frr config
