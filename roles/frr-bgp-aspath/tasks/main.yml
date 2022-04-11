@@ -1,0 +1,9 @@
+---
+
+- name: configure frr bgp as-path access-list
+  include_tasks: frr_bgp_aspath_entries.yml
+  loop: "{{ frr_bgp_aspath }}"
+  loop_control:
+    loop_var: aspath
+  when: frr_bgp_aspath is defined
+  tags: [ frr, frr-config, frr-bgp, frr-bgp-aspath ]

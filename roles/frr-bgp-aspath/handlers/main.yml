@@ -1,0 +1,4 @@
+---
+# handlers file for frr-prefixlist
+- name: save frr config
+  command: "vtysh -c 'write mem'"

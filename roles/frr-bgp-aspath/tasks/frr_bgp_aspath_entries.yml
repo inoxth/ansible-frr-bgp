@@ -1,0 +1,25 @@
+---
+- name: as-path {{ aspath.name }}/ check for current entries
+  shell:
+    vtysh -c "show run" | grep -E "^bgp as-path access-list {{ aspath.name }} " | grep -oE 'permit .*' | sed 's/permit //g'
+  register: aspath_config
+  changed_when: false
+  tags: [ not_print_action ]
+
+- name: as-path {{ aspath.name }}/ add entries
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      bgp as-path access-list {{ aspath.name }} permit {{ item }}"
+  loop: "{{ aspath.entries }}"
+  when: item not in aspath_config.stdout_lines
+  notify: save frr config
+
+- name: as-path {{ aspath.name }}/ remove unused entries
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      no bgp as-path access-list {{ aspath.name }} permit {{ item }}"
+  loop: "{{ aspath_config.stdout_lines }}"
+  when: item not in aspath.entries
+  notify: save frr config
