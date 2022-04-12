@@ -111,6 +111,23 @@
   loop_control:
     label: "{{ 'no ' if item.next_hop_self is not defined else '' }}neighbor {{ item.ip }} next-hop-self"
 
+- name: set neighbor peer addpath-tx-all-paths
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      {{ 'no' if item.addpath_tx_all_paths is not defined else '' }} neighbor {{ item.ip }} addpath-tx-all-paths
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.addpath_tx_all_paths is defined and 
+    "  neighbor " ~ item.ip ~ " addpath-tx-all-paths" not in frr_config.stdout_lines) or
+    (item.addpath_tx_all_paths is not defined and 
+    "  neighbor " ~ item.ip ~ " addpath-tx-all-paths" in frr_config.stdout_lines)'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.addpath_tx_all_paths is not defined else '' }}neighbor {{ item.ip }} addpath-tx-all-paths"
+
 - name: set neighbor peer route-reflector-client status
   shell:
     cmd: |
