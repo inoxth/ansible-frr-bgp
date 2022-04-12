@@ -20,7 +20,6 @@
       neighbor {{ item.ip }} remote-as {{ item.remote_as }}
       address-family {{ item.address_family }} unicast
       neighbor {{ item.ip }} activate
-      neighbor {{ item.ip }} next-hop-self
       neighbor {{ item.ip }} soft-reconfiguration inbound
       "
   with_items: "{{ frr_bgp.peers }}"
@@ -94,6 +93,23 @@
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.bfd is not defined else '' }}neighbor {{ item.ip }} bfd"
+
+- name: set neighbor peer next-hop-self
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      {{ 'no' if item.next_hop_self is not defined else '' }} neighbor {{ item.ip }} next-hop-self
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: '(item.next_hop_self is defined and 
+    "  neighbor " ~ item.ip ~ " next-hop-self" not in frr_config.stdout_lines) or
+    (item.next_hop_self is not defined and 
+    "  neighbor " ~ item.ip ~ " next-hop-self" in frr_config.stdout_lines)'
+  notify: save frr config
+  loop_control:
+    label: "{{ 'no ' if item.next_hop_self is not defined else '' }}neighbor {{ item.ip }} next-hop-self"
 
 - name: set neighbor peer route-reflector-client status
   shell:
