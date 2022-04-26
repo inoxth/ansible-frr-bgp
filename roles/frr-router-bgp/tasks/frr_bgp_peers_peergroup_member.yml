@@ -6,6 +6,6 @@
       router bgp {{ frr_bgp.asnum }}
       neighbor {{ item }} peer-group {{ peer.ip }}
       "
-  with_items: " {{ peer.members }}"
+  with_items: "{{ peer.members }}"
   when: '" neighbor " ~ item ~ " peer-group " ~ peer.ip not in frr_config.stdout_lines'
   notify: save frr config
