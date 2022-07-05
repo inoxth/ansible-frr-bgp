@@ -1,0 +1,12 @@
+{% for prefix in prefixlist.entries %}
+{% if prefix not in prefixlist_config.stdout_lines %}
+{{ 'ipv6' if prefixlist.address_family == 'ipv6' else 'ip' }} prefix-list {{ prefixlist.name }} permit {{ prefix }}
+{% endif %}
+{% endfor %}
+{% if prefixlist_config.stdout_lines is defined %}
+{% for item in prefixlist_config.stdout_lines %}
+{% if item not in prefixlist.entries %}
+no {{ 'ipv6' if prefixlist.address_family == 'ipv6' else 'ip' }} prefix-list {{ prefixlist.name }} permit {{ item }}
+{% endif %}
+{% endfor %}
+{% endif %}
