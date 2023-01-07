@@ -215,6 +215,21 @@
   loop_control:
     label: "neighbor {{ item.ip }} maximum-prefix {{ item.maximum_prefix|default('NOTSET') }}"
 
+- name: set peer maximum prefix out
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ item.address_family }} unicast
+      neighbor {{ item.ip }} maximum-prefix-out {{ item.maximum_prefix_out }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.maximum_prefix_out is defined and 
+    "  neighbor " ~ item.ip ~ " maximum-prefix-out " ~ item.maximum_prefix_out not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} maximum-prefix-out {{ item.maximum_prefix_out|default('NOTSET') }}"
+
 - name: set peer weight
   shell:
     cmd: |
