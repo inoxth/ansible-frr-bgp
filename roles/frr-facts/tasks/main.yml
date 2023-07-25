@@ -1,5 +1,5 @@
 ---
 # tasks file for frr-facts
 - name: gather frr facts
-  include: frr_facts.yml
+  import_tasks: frr_facts.yml
   tags: [ frr, frr-config, frr-bgp, always ]

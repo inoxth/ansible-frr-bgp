@@ -1,13 +1,13 @@
 - name: gather frr facts
-  include: frr_facts.yml
+  import_tasks: frr_facts.yml
   tags: [ frr, frr-config, frr-bgp, always ]
 
 - name: configure frr bgp
-  include: frr_bgp.yml
+  import_tasks: frr_bgp.yml
   when: frr_bgp is defined and frr_bgp.asnum is defined
   tags: [ frr, frr-config, frr-bgp ]
 
 - name: configure frr bgp peers
-  include: frr_bgp_peers.yml
+  import_tasks: frr_bgp_peers.yml
   when: frr_bgp is defined and frr_bgp.peers is defined
   tags: [ frr, frr-config, frr-bgp ]

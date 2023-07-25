@@ -5,5 +5,5 @@
   changed_when: False
 
 - name: gather bgp facts
-  include: frr_facts_bgp.yml
+  import_tasks: frr_facts_bgp.yml
   when: '"\nrouter bgp " in frr_config.stdout'
