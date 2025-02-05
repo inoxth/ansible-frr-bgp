@@ -27,7 +27,7 @@
       (item.address_family == "ipv4" and frr_bgp_ipv4[item.ip] is not defined) or
       (item.address_family == "ipv6" and frr_bgp_ipv6[item.ip] is not defined)
     )) or (
-      item.ispeergroup is defined and item.ispeergroup and 
+      item.ispeergroup is defined and item.ispeergroup and
       " neighbor " ~ item.ip ~ " remote-as " ~ item.remote_as not in frr_config.stdout_lines
     )'
   notify: save frr config
@@ -42,11 +42,25 @@
       neighbor {{ item.ip }} password {{ item.password }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.password is defined and 
+  when: 'item.password is defined and
     " neighbor " ~ item.ip ~ " password " ~ item.password not in frr_config.stdout_lines'
   notify: save frr config
   loop_control:
     label: "neighbor {{ item.ip }} password"
+
+- name: set neighbor peer local-as
+  shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ item.ip }} local-as {{ item.local_as }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: 'item.local_as is defined and
+    " neighbor " ~ item.ip ~ " local-as " ~ item.local_as not in frr_config.stdout_lines'
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} local-as"
 
 - name: set neighbor peer description
   shell:
@@ -56,7 +70,7 @@
       neighbor {{ item.ip }} description {{ item.desc }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.desc is defined and 
+  when: 'item.desc is defined and
     " neighbor " ~ item.ip ~ " description " ~ item.desc not in frr_config.stdout_lines'
   notify: save frr config
   loop_control:
