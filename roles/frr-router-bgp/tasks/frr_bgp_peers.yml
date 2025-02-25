@@ -1,6 +1,6 @@
 ---
-- name: create peer-group
-  shell:
+- name: BGP-peer/ create peer-group
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -8,12 +8,13 @@
       "
   with_items: "{{ frr_bgp.peers }}"
   when: 'item.ispeergroup is defined and item.ispeergroup and " neighbor " ~ item.ip ~ " peer-group" not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "neighbor {{ item.ip }} peer-group"
 
-- name: create peer entry
-  shell:
+- name: BGP-peer/ create peer entry
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -30,12 +31,13 @@
       item.ispeergroup is defined and item.ispeergroup and
       " neighbor " ~ item.ip ~ " remote-as " ~ item.remote_as not in frr_config.stdout_lines
     )'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
 
-- name: set neighbor peer password
-  shell:
+- name: BGP-peer/ set neighbor peer password
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -44,12 +46,13 @@
   with_items: "{{ frr_bgp.peers }}"
   when: 'item.password is defined and
     " neighbor " ~ item.ip ~ " password " ~ item.password not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "neighbor {{ item.ip }} password"
 
-- name: set neighbor peer local-as
-  shell:
+- name: BGP-peer/ set neighbor peer local-as
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -58,12 +61,13 @@
   with_items: "{{ frr_bgp.peers }}"
   when: 'item.local_as is defined and
     " neighbor " ~ item.ip ~ " local-as " ~ item.local_as not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "neighbor {{ item.ip }} local-as"
 
-- name: set neighbor peer description
-  shell:
+- name: BGP-peer/ set neighbor peer description
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -72,44 +76,47 @@
   with_items: "{{ frr_bgp.peers }}"
   when: 'item.desc is defined and
     " neighbor " ~ item.ip ~ " description " ~ item.desc not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "neighbor {{ item.ip }} description"
 
-- name: set neighbor peer shutdown status
-  shell:
+- name: BGP-peer/ set neighbor peer shutdown status
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
       {{ 'no' if item.shutdown is not defined else '' }} neighbor {{ item.ip }} shutdown
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.shutdown is defined and 
+  when: '(item.shutdown is defined and
     " neighbor " ~ item.ip ~ " shutdown" not in frr_config.stdout_lines) or
-    (item.shutdown is not defined and 
+    (item.shutdown is not defined and
     " neighbor " ~ item.ip ~ " shutdown" in frr_config.stdout_lines)'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.shutdown is not defined else '' }}neighbor {{ item.ip }} shutdown"
 
-- name: set neighbor peer bfd status
-  shell:
+- name: BGP-peer/ set neighbor peer bfd status
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
       {{ 'no' if item.bfd is not defined else '' }} neighbor {{ item.ip }} bfd
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.bfd is defined and 
+  when: '(item.bfd is defined and
     " neighbor " ~ item.ip ~ " bfd" not in frr_config.stdout_lines) or
-    (item.bfd is not defined and 
+    (item.bfd is not defined and
     " neighbor " ~ item.ip ~ " bfd" in frr_config.stdout_lines)'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.bfd is not defined else '' }}neighbor {{ item.ip }} bfd"
 
-- name: set neighbor peer next-hop-self
-  shell:
+- name: BGP-peer/ set neighbor peer next-hop-self
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -117,16 +124,17 @@
       {{ 'no' if item.next_hop_self is not defined else '' }} neighbor {{ item.ip }} next-hop-self
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.next_hop_self is defined and 
+  when: '(item.next_hop_self is defined and
     "  neighbor " ~ item.ip ~ " next-hop-self" not in frr_config.stdout_lines) or
-    (item.next_hop_self is not defined and 
+    (item.next_hop_self is not defined and
     "  neighbor " ~ item.ip ~ " next-hop-self" in frr_config.stdout_lines)'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.next_hop_self is not defined else '' }}neighbor {{ item.ip }} next-hop-self"
 
-- name: set neighbor peer addpath-tx-all-paths
-  shell:
+- name: BGP-peer/ set neighbor peer addpath-tx-all-paths
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -134,16 +142,17 @@
       {{ 'no' if item.addpath_tx_all_paths is not defined else '' }} neighbor {{ item.ip }} addpath-tx-all-paths
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.addpath_tx_all_paths is defined and 
+  when: '(item.addpath_tx_all_paths is defined and
     "  neighbor " ~ item.ip ~ " addpath-tx-all-paths" not in frr_config.stdout_lines) or
-    (item.addpath_tx_all_paths is not defined and 
+    (item.addpath_tx_all_paths is not defined and
     "  neighbor " ~ item.ip ~ " addpath-tx-all-paths" in frr_config.stdout_lines)'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.addpath_tx_all_paths is not defined else '' }}neighbor {{ item.ip }} addpath-tx-all-paths"
 
-- name: set neighbor peer route-reflector-client status
-  shell:
+- name: BGP-peer/ set neighbor peer route-reflector-client status
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -151,54 +160,57 @@
       {{ 'no' if item.route_reflector_client is not defined else '' }} neighbor {{ item.ip }} route-reflector-client
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.route_reflector_client is defined and 
+  when: '(item.route_reflector_client is defined and
     "  neighbor " ~ item.ip ~ " route-reflector-client" not in frr_config.stdout_lines) or
-    (item.route_reflector_client is not defined and 
+    (item.route_reflector_client is not defined and
     "  neighbor " ~ item.ip ~ " route-reflector-client" in frr_config.stdout_lines)'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.route_reflector_client is not defined else '' }}neighbor {{ item.ip }} route-reflector-client"
 
-- name: set neighbor peer 'ebgp-multihop'
-  shell:
+- name: BGP-peer/ set neighbor peer 'ebgp-multihop' # noqa: yaml[line-length]
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
       {{ 'no' if item.ebgp_multihop is not defined else '' }} neighbor {{ item.ip }} ebgp-multihop{{ ' ' ~ item.ebgp_multihop if item.ebgp_multihop is defined else '' }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.ebgp_multihop is defined and 
+  when: '(item.ebgp_multihop is defined and
     " neighbor " ~ item.ip ~ " ebgp-multihop " ~ item.ebgp_multihop not in frr_config.stdout_lines) or
-    (item.ebgp_multihop is not defined and 
+    (item.ebgp_multihop is not defined and
     frr_config.stdout is regex(" neighbor " ~ item.ip ~ " ebgp-multihop ") )'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.ebgp_multihop is not defined else '' }}neighbor {{ item.ip }} ebgp-multihop"
 
-- name: set neighbor peer 'update-source'
-  shell:
+- name: BGP-peer/ set neighbor peer 'update-source' # noqa: yaml[line-length]
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
       {{ 'no' if item.update_source is not defined else '' }} neighbor {{ item.ip }} update-source{{ ' ' ~ item.update_source if item.update_source is defined else '' }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.update_source is defined and 
+  when: '(item.update_source is defined and
     " neighbor " ~ item.ip ~ " update-source " ~ item.update_source not in frr_config.stdout_lines) or
-    (item.update_source is not defined and 
+    (item.update_source is not defined and
     frr_config.stdout is regex(" neighbor " ~ item.ip ~ " update-source ") )'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.update_source is not defined else '' }}neighbor {{ item.ip }} update-source"
 
-- name: set neighbor peer 'default-originate'
-  include_tasks: frr_bgp_peers_default_originate.yml
+- name: BGP-peer/ set neighbor peer 'default-originate'
+  ansible.builtin.include_tasks: frr_bgp_peers_default_originate.yml
   with_items: "{{ frr_bgp.peers }}"
   loop_control:
     label: "{{ 'no ' if item.default_originate is not defined else '' }}neighbor {{ item.ip }} default-originate"
 
-- name: set neighbor peer remove-private-AS
-  shell:
+- name: BGP-peer/ set neighbor peer remove-private-AS
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -206,16 +218,17 @@
       {{ 'no' if item.remove_private_as is not defined else '' }} neighbor {{ item.ip }} remove-private-AS
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: '(item.remove_private_as is defined and 
+  when: '(item.remove_private_as is defined and
     "  neighbor " ~ item.ip ~ " remove-private-AS" not in frr_config.stdout_lines) or
-    (item.remove_private_as is not defined and 
+    (item.remove_private_as is not defined and
     "  neighbor " ~ item.ip ~ " remove-private-AS" in frr_config.stdout_lines)'
+  changed_when: true
   notify: save frr config
   loop_control:
     label: "{{ 'no ' if item.remove_private_as is not defined else '' }}neighbor {{ item.ip }} remove-private-AS"
 
-- name: set peer maximum prefix
-  shell:
+- name: BGP-peer/ set peer maximum prefix
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -223,14 +236,15 @@
       neighbor {{ item.ip }} maximum-prefix {{ item.maximum_prefix }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.maximum_prefix is defined and 
+  when: 'item.maximum_prefix is defined and
     "  neighbor " ~ item.ip ~ " maximum-prefix " ~ item.maximum_prefix not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} maximum-prefix {{ item.maximum_prefix|default('NOTSET') }}"
+    label: "neighbor {{ item.ip }} maximum-prefix {{ item.maximum_prefix | default('NOTSET') }}"
 
-- name: set peer maximum prefix out
-  shell:
+- name: BGP-peer/ set peer maximum prefix out
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -238,14 +252,15 @@
       neighbor {{ item.ip }} maximum-prefix-out {{ item.maximum_prefix_out }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.maximum_prefix_out is defined and 
+  when: 'item.maximum_prefix_out is defined and
     "  neighbor " ~ item.ip ~ " maximum-prefix-out " ~ item.maximum_prefix_out not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} maximum-prefix-out {{ item.maximum_prefix_out|default('NOTSET') }}"
+    label: "neighbor {{ item.ip }} maximum-prefix-out {{ item.maximum_prefix_out | default('NOTSET') }}"
 
-- name: set peer weight
-  shell:
+- name: BGP-peer/ set peer weight
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -253,14 +268,15 @@
       neighbor {{ item.ip }} weight {{ item.weight }}
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.weight is defined and 
+  when: 'item.weight is defined and
     "  neighbor " ~ item.ip ~ " weight " ~ item.weight not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} weight {{ item.weight|default('NOTSET') }}"
+    label: "neighbor {{ item.ip }} weight {{ item.weight | default('NOTSET') }}"
 
-- name: set peer route-map in
-  shell:
+- name: BGP-peer/ set peer route-map in
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -268,14 +284,15 @@
       neighbor {{ item.ip }} route-map {{ item.route_map_in }} in
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.route_map_in is defined and 
+  when: 'item.route_map_in is defined and
     "  neighbor " ~ item.ip ~ " route-map " ~ item.route_map_in ~ " in" not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} route-map {{ item.route_map_in|default('NOTSET') }} in"
+    label: "neighbor {{ item.ip }} route-map {{ item.route_map_in | default('NOTSET') }} in"
 
-- name: set peer route-map out
-  shell:
+- name: BGP-peer/ set peer route-map out
+  ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
@@ -283,14 +300,15 @@
       neighbor {{ item.ip }} route-map {{ item.route_map_out }} out
       "
   with_items: "{{ frr_bgp.peers }}"
-  when: 'item.route_map_out is defined and 
+  when: 'item.route_map_out is defined and
     "  neighbor " ~ item.ip ~ " route-map " ~ item.route_map_out ~ " out" not in frr_config.stdout_lines'
+  changed_when: true
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} route-map {{ item.route_map_out|default('NOTSET') }} out"
+    label: "neighbor {{ item.ip }} route-map {{ item.route_map_out | default('NOTSET') }} out"
 
-- name: set ipv4 peer-group members
-  include_tasks: frr_bgp_peers_peergroup_member.yml
+- name: BGP-peer/ set ipv4 peer-group members
+  ansible.builtin.include_tasks: frr_bgp_peers_peergroup_member.yml
   with_items: "{{ frr_bgp.peers }}"
   loop_control:
     loop_var: peer
