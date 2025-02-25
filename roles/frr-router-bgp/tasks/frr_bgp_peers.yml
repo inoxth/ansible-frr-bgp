@@ -25,7 +25,7 @@
   changed_when: true
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+    label: "neighbor {{ item.ip }} remote-as"
 
 - name: BGP-peer/ activate address family
   ansible.builtin.shell:

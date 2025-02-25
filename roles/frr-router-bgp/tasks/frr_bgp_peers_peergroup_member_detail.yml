@@ -1,6 +1,6 @@
 ---
 
-- name: Add peergroup member
+- name: Add peergroup member {{ peer_member.ip ~ " to " ~ peer.ip }}
   ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
@@ -11,7 +11,7 @@
   changed_when: true
   notify: save frr config
 
-- name: Add peergroup member description
+- name: Add peergroup member description {{ peer_member.ip }}
   ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
@@ -22,7 +22,7 @@
   changed_when: true
   notify: save frr config
 
-- name: Add peergroup member remote-as
+- name: Add peergroup member remote-as {{ peer_member.ip }}
   ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
@@ -30,5 +30,32 @@
       neighbor {{ peer_member.ip }} remote-as {{ peer_member.remote_as }}
       "
   when: 'peer_member.remote_as is defined and " neighbor " ~ peer_member.ip ~ " remote-as " ~ peer_member.remote_as not in frr_config.stdout_lines'
+  changed_when: true
+  notify: save frr config
+
+
+- name: Set peergroup member maximum prefix {{ peer_member.ip }}
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ peer.address_family }} unicast
+      neighbor {{ peer_member.ip }} maximum-prefix {{ peer_member.maximum_prefix }}
+      "
+  when: 'peer_member.maximum_prefix is defined and
+    "  neighbor " ~ peer_member.ip ~ " maximum-prefix " ~ peer_member.maximum_prefix not in frr_config.stdout_lines'
+  changed_when: true
+  notify: save frr config
+
+- name: Set peergroup member maximum prefix out {{ peer_member.ip }}
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      address-family {{ peer.address_family }} unicast
+      neighbor {{ peer_member.ip }} maximum-prefix-out {{ peer_member.maximum_prefix_out }}
+      "
+  when: 'peer_member.maximum_prefix_out is defined and
+    "  neighbor " ~ peer_member.ip ~ " maximum-prefix-out " ~ peer_member.maximum_prefix_out not in frr_config.stdout_lines'
   changed_when: true
   notify: save frr config
