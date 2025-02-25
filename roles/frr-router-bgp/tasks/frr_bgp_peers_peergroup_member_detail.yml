@@ -1,4 +1,16 @@
 ---
+
+- name: Make sure there's no peer if not in peergroup {{ peer.ip }}
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      no neighbor {{ peer_member.ip }}
+      "
+  when: '" neighbor " ~ peer_member.ip ~ " peer-group " ~ peer.ip not in frr_config.stdout_lines'
+  changed_when: true
+  notify: save frr config
+
 - name: Add peergroup member {{ peer_member.ip ~ " to " ~ peer.ip }}
   ansible.builtin.shell:
     cmd: |
