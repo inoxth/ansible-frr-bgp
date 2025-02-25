@@ -1,5 +1,4 @@
 ---
-
 - name: Add peergroup member {{ peer_member.ip ~ " to " ~ peer.ip }}
   ansible.builtin.shell:
     cmd: |
