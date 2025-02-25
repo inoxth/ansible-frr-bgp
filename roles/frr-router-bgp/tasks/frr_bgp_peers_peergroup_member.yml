@@ -1,5 +1,5 @@
 ---
-- name: Add peergroup member
+- name: Add peergroup member (plain)
   ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
@@ -7,6 +7,13 @@
       neighbor {{ item }} peer-group {{ peer.ip }}
       "
   with_items: "{{ peer.members }}"
-  when: '" neighbor " ~ item ~ " peer-group " ~ peer.ip not in frr_config.stdout_lines'
+  when: item | ansible.builtin.type_debug != 'dict' and " neighbor " ~ item ~ " peer-group " ~ peer.ip not in frr_config.stdout_lines
   changed_when: true
   notify: save frr config
+
+- name: Add peergroup member with informations
+  ansible.builtin.include_tasks: frr_bgp_peers_peergroup_member_detail.yml
+  loop: "{{ peer.members }}"
+  loop_control:
+    loop_var: peer_member
+  when: peer_member | ansible.builtin.type_debug == 'dict'

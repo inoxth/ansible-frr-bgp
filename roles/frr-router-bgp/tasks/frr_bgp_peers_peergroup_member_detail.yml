@@ -1,0 +1,34 @@
+---
+
+- name: Add peergroup member
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ peer_member.ip }} peer-group {{ peer.ip }}
+      "
+  when: '" neighbor " ~ peer_member.ip ~ " peer-group " ~ peer.ip not in frr_config.stdout_lines'
+  changed_when: true
+  notify: save frr config
+
+- name: Add peergroup member description
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ peer_member.ip }} description {{ peer_member.desc }}
+      "
+  when: '" neighbor " ~ peer_member.ip ~ " description " ~ peer_member.desc not in frr_config.stdout_lines'
+  changed_when: true
+  notify: save frr config
+
+- name: Add peergroup member remote-as
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
+      neighbor {{ peer_member.ip }} remote-as {{ peer_member.remote_as }}
+      "
+  when: '" neighbor " ~ peer_member.ip ~ " remote-as " ~ peer_member.remote_as not in frr_config.stdout_lines'
+  changed_when: true
+  notify: save frr config

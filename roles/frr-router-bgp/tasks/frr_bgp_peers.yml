@@ -13,15 +13,27 @@
   loop_control:
     label: "neighbor {{ item.ip }} peer-group"
 
-- name: BGP-peer/ create peer entry
+- name: BGP-peer/ set remote-as
   ansible.builtin.shell:
     cmd: |
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
       neighbor {{ item.ip }} remote-as {{ item.remote_as }}
+      "
+  with_items: "{{ frr_bgp.peers }}"
+  when: item.remote_as is defined and " neighbor " ~ item.ip ~ " remote-as " ~ item.remote_as not in frr_config.stdout_lines
+  changed_when: true
+  notify: save frr config
+  loop_control:
+    label: "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+
+- name: BGP-peer/ activate address family
+  ansible.builtin.shell:
+    cmd: |
+      vtysh -c "conf t
+      router bgp {{ frr_bgp.asnum }}
       address-family {{ item.address_family }} unicast
       neighbor {{ item.ip }} activate
-      neighbor {{ item.ip }} soft-reconfiguration inbound
       "
   with_items: "{{ frr_bgp.peers }}"
   when: '( item.ispeergroup is not defined and (
@@ -29,12 +41,12 @@
       (item.address_family == "ipv6" and frr_bgp_ipv6[item.ip] is not defined)
     )) or (
       item.ispeergroup is defined and item.ispeergroup and
-      " neighbor " ~ item.ip ~ " remote-as " ~ item.remote_as not in frr_config.stdout_lines
+      "  neighbor " ~ item.ip ~ " activate" not in frr_config.stdout_lines
     )'
-  changed_when: true
+  changed_when: false
   notify: save frr config
   loop_control:
-    label: "neighbor {{ item.ip }} remote-as {{ item.remote_as }}"
+    label: "neighbor {{ item.ip }} activate"
 
 - name: BGP-peer/ set neighbor peer password
   ansible.builtin.shell:
@@ -215,13 +227,13 @@
       vtysh -c "conf t
       router bgp {{ frr_bgp.asnum }}
       address-family {{ item.address_family }} unicast
-      {{ 'no' if item.remove_private_as is not defined else '' }} neighbor {{ item.ip }} remove-private-AS
+      {{ 'no' if item.remove_private_as is not defined else '' }} neighbor {{ item.ip }} remove-private-AS all
       "
   with_items: "{{ frr_bgp.peers }}"
   when: '(item.remove_private_as is defined and
-    "  neighbor " ~ item.ip ~ " remove-private-AS" not in frr_config.stdout_lines) or
+    "  neighbor " ~ item.ip ~ " remove-private-AS all" not in frr_config.stdout_lines) or
     (item.remove_private_as is not defined and
-    "  neighbor " ~ item.ip ~ " remove-private-AS" in frr_config.stdout_lines)'
+    "  neighbor " ~ item.ip ~ " remove-private-AS all" in frr_config.stdout_lines)'
   changed_when: true
   notify: save frr config
   loop_control:
