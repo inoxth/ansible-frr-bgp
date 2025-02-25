@@ -18,7 +18,7 @@
       router bgp {{ frr_bgp.asnum }}
       neighbor {{ peer_member.ip }} description {{ peer_member.desc }}
       "
-  when: '" neighbor " ~ peer_member.ip ~ " description " ~ peer_member.desc not in frr_config.stdout_lines'
+  when: 'peer_member.desc is defined and " neighbor " ~ peer_member.ip ~ " description " ~ peer_member.desc not in frr_config.stdout_lines'
   changed_when: true
   notify: save frr config
 
@@ -29,6 +29,6 @@
       router bgp {{ frr_bgp.asnum }}
       neighbor {{ peer_member.ip }} remote-as {{ peer_member.remote_as }}
       "
-  when: '" neighbor " ~ peer_member.ip ~ " remote-as " ~ peer_member.remote_as not in frr_config.stdout_lines'
+  when: 'peer_member.remote_as is defined and " neighbor " ~ peer_member.ip ~ " remote-as " ~ peer_member.remote_as not in frr_config.stdout_lines'
   changed_when: true
   notify: save frr config
